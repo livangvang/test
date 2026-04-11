@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Layout Preview — Shadow Performance</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+  :root {
+    --orange: #EA5504;
+    --orange-dim: #ea550420;
+    --orange-glow: #ea550466;
+    --bg: #0a0a0a;
+    --bg2: #111211;
+    --bg3: #1a1a1a;
+    --card: #141414;
+    --border: #222222;
+    --text: #f0f0f0;
+    --text2: #aaaaaa;
+    --text3: #666666;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Preview Toggle ── */
+  .preview-bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+    background: rgba(10, 10, 10, 0.92);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .preview-bar .title {
+    font-size: 13px; color: var(--text2); font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase;
+  }
+  .preview-bar .title span { color: var(--orange); }
+  .toggle-group {
+    display: flex; gap: 4px; background: var(--bg3); border-radius: 8px; padding: 3px;
+  }
+  .toggle-btn {
+    padding: 6px 16px; border: none; border-radius: 6px;
+    font-family: inherit; font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+    background: transparent; color: var(--text3);
+    letter-spacing: 0.5px;
+  }
+  .toggle-btn.active { background: var(--orange); color: #fff; }
+
+  .layout-wrap { display: none; }
+  .layout-wrap.visible { display: block; }
+
+  /* ════════════════════════════════════════ */
+  /*  SHARED                                  */
+  /* ════════════════════════════════════════ */
+
+  .top-bar-line {
+    height: 4px; margin-top: 52px;
+    background: linear-gradient(90deg, var(--orange), #ff7b2e, var(--orange));
+  }
+
+  .site-nav {
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 0 40px;
+    display: flex; align-items: center; justify-content: space-between; height: 60px;
+  }
+  .site-nav .logo { height: 28px; opacity: 0.9; }
+  .site-nav .nav-links { display: flex; gap: 24px; }
+  .site-nav .nav-links a {
+    color: var(--text2); text-decoration: none; font-size: 13px;
+    font-weight: 500; letter-spacing: 0.5px; transition: color 0.2s;
+  }
+  .site-nav .nav-links a:hover { color: var(--orange); }
+
+  .site-footer {
+    text-align: center; padding: 40px 24px;
+    border-top: 1px solid var(--border);
+    color: var(--text3); font-size: 12px;
+  }
+  .site-footer a { color: var(--orange); text-decoration: none; }
+
+  /* ════════════════════════════════════════ */
+  /*  PROPOSED LAYOUT                         */
+  /* ════════════════════════════════════════ */
+
+  /* ── Hero ── */
+  .hero-new {
+    padding: 0;
+    position: relative; overflow: hidden;
+    background: linear-gradient(160deg, var(--bg) 0%, var(--bg2) 40%, var(--bg) 100%);
+  }
+  .hero-new .hero-inner {
+    max-width: 1200px; margin: 0 auto;
+    display: grid; grid-template-columns: 1fr 1fr;
+    min-height: 520px;
+  }
+  .hero-new .hero-text {
+    padding: 100px 0 80px 40px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .hero-new .hero-image {
+    position: relative; overflow: hidden;
+  }
+  .hero-new .hero-image img {
+    width: 100%; height: 100%; object-fit: cover;
+    filter: brightness(0.75);
+  }
+  .hero-new .hero-image::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, var(--bg2) 0%, transparent 40%);
+  }
+  .hero-new .hero-eyebrow {
+    font-size: 13px; color: var(--orange); font-weight: 700;
+    letter-spacing: 4px; text-transform: uppercase; margin-bottom: 20px;
+  }
+  .hero-new h1 {
+    font-size: 72px; font-weight: 900; line-height: 1.0;
+    letter-spacing: -3px; margin-bottom: 20px; max-width: 700px;
+  }
+  .hero-new h1 .accent { color: var(--orange); }
+  .hero-new .hero-desc {
+    font-size: 18px; color: var(--text2); max-width: 550px;
+    line-height: 1.7; margin-bottom: 40px;
+  }
+  .hero-new .stats-row { display: flex; gap: 48px; flex-wrap: wrap; }
+  .hero-new .stat-num {
+    font-size: 52px; font-weight: 900; color: var(--orange);
+    line-height: 1; letter-spacing: -2px;
+  }
+  .hero-new .stat-label {
+    font-size: 12px; color: var(--text3); text-transform: uppercase;
+    letter-spacing: 2px; font-weight: 500; margin-top: 4px;
+  }
+
+  /* ── Section Bar ── */
+  .section-bar {
+    max-width: 1200px; margin: 0 auto;
+    padding: 48px 40px 24px;
+    display: flex; align-items: baseline; justify-content: space-between;
+  }
+  .section-bar .section-title {
+    font-size: 11px; color: var(--text3); text-transform: uppercase;
+    letter-spacing: 3px; font-weight: 600;
+  }
+  .section-bar .section-count { font-size: 12px; color: var(--text3); }
+
+  /* ── Product Grid ── */
+  .product-section {
+    max-width: 1200px; margin: 0 auto; padding: 0 40px 60px;
+  }
+  .product-grid-new {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 20px;
+  }
+
+  .pcard {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; overflow: hidden;
+    transition: all 0.35s ease;
+    text-decoration: none; color: inherit; display: block;
+  }
+  .pcard:hover {
+    border-color: var(--orange);
+    transform: translateY(-6px);
+    box-shadow: 0 20px 50px rgba(234, 85, 4, 0.12);
+  }
+  .pcard .pcard-img-wrap { overflow: hidden; height: 220px; }
+  .pcard .pcard-img {
+    width: 100%; height: 100%; object-fit: cover;
+    transition: transform 0.5s ease;
+  }
+  .pcard:hover .pcard-img { transform: scale(1.03); }
+  .pcard .pcard-body { padding: 24px 28px; }
+  .pcard .pcard-name {
+    font-size: 22px; font-weight: 800; margin-bottom: 6px;
+    letter-spacing: -0.3px; line-height: 1.2;
+  }
+  .pcard .pcard-sub {
+    font-size: 13px; color: var(--text3); letter-spacing: 0.3px; margin-bottom: 16px;
+  }
+  .pcard .pcard-stats { display: flex; gap: 20px; margin-bottom: 14px; }
+  .pcard .ps-num {
+    font-size: 28px; font-weight: 900; color: var(--orange);
+    letter-spacing: -1px; line-height: 1;
+  }
+  .pcard .ps-label {
+    font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px;
+  }
+  .pcard .pcard-desc {
+    font-size: 13px; color: var(--text2); line-height: 1.6; margin-bottom: 16px;
+  }
+  .pcard .pcard-cta {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 700; color: var(--orange);
+    letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .pcard .pcard-cta svg { transition: transform 0.2s; }
+  .pcard:hover .pcard-cta svg { transform: translateX(6px); }
+
+  /* ── Brand Story Banner ── */
+  .story-banner {
+    display: grid; grid-template-columns: 1fr 1fr;
+    min-height: 320px;
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .story-banner .story-text {
+    padding: 60px 48px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .story-banner .story-eyebrow {
+    font-size: 11px; color: var(--orange); font-weight: 700;
+    letter-spacing: 3px; text-transform: uppercase; margin-bottom: 16px;
+  }
+  .story-banner .story-title {
+    font-size: 36px; font-weight: 900; line-height: 1.1;
+    letter-spacing: -1px; margin-bottom: 16px;
+  }
+  .story-banner .story-desc {
+    font-size: 15px; color: var(--text2); line-height: 1.7;
+    margin-bottom: 24px; max-width: 440px;
+  }
+  .story-banner .story-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 28px;
+    background: transparent; border: 2px solid var(--orange);
+    color: var(--orange); border-radius: 8px;
+    font-family: inherit; font-size: 13px; font-weight: 700;
+    letter-spacing: 1px; text-transform: uppercase;
+    cursor: pointer; transition: all 0.2s; width: fit-content;
+    text-decoration: none;
+  }
+  .story-banner .story-btn:hover { background: var(--orange); color: #fff; }
+  .story-banner .story-image { position: relative; overflow: hidden; }
+  .story-banner .story-image img {
+    width: 100%; height: 100%; object-fit: cover;
+    filter: brightness(0.7); transition: transform 0.5s;
+  }
+  .story-banner .story-image:hover img { transform: scale(1.03); }
+  .story-banner .story-image::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(270deg, transparent 60%, var(--bg2) 100%);
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .hero-new .hero-inner { grid-template-columns: 1fr; min-height: auto; }
+    .hero-new .hero-text { padding: 60px 20px 40px; }
+    .hero-new .hero-image { height: 280px; }
+    .hero-new h1 { font-size: 42px; letter-spacing: -1.5px; }
+    .hero-new .hero-desc { font-size: 15px; }
+    .hero-new .stat-num { font-size: 36px; }
+    .hero-new .stats-row { gap: 24px; }
+    .product-grid-new { grid-template-columns: 1fr; }
+    .section-bar, .product-section { padding-left: 20px; padding-right: 20px; }
+    .story-banner { grid-template-columns: 1fr; }
+    .story-banner .story-image { height: 240px; }
+    .story-banner .story-text { padding: 40px 20px; }
+    .story-banner .story-title { font-size: 28px; }
+    .site-nav { padding: 0 20px; }
+    .site-nav .nav-links { display: none; }
+    .preview-bar { flex-direction: column; gap: 8px; padding: 8px 16px; }
+  }
+
+  /* ── Animations ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .pcard { animation: fadeUp 0.5s ease forwards; opacity: 0; }
+  .pcard:nth-child(1) { animation-delay: 0s; }
+  .pcard:nth-child(2) { animation-delay: 0.06s; }
+  .pcard:nth-child(3) { animation-delay: 0.12s; }
+  .pcard:nth-child(4) { animation-delay: 0.18s; }
+  .pcard:nth-child(5) { animation-delay: 0.24s; }
+  .pcard:nth-child(6) { animation-delay: 0.30s; }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+
+  /* ════════════════════════════════════════ */
+  /*  CURRENT (original) for comparison       */
+  /* ════════════════════════════════════════ */
+  .old-hero {
+    padding: 100px 24px 80px; text-align: center;
+    background: linear-gradient(135deg, var(--bg) 0%, var(--bg2) 50%, var(--bg) 100%);
+  }
+  .old-hero h1 { font-size: 52px; font-weight: 800; line-height: 1.1; letter-spacing: -1px; margin-bottom: 12px; }
+  .old-hero h1 .accent { color: var(--orange); }
+  .old-hero .subtitle {
+    font-size: 16px; color: var(--text2); letter-spacing: 2px;
+    text-transform: uppercase; margin-bottom: 16px;
+  }
+  .old-hero .hero-desc {
+    font-size: 15px; color: var(--text3); max-width: 600px; margin: 0 auto 40px;
+  }
+  .old-stats { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; }
+  .old-stat {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px 28px; min-width: 130px; text-align: center;
+  }
+  .old-stat .num { font-size: 36px; font-weight: 800; color: var(--orange); line-height: 1; }
+  .old-stat .label { font-size: 12px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+  .old-products { max-width: 1200px; margin: 0 auto; padding: 40px 24px 80px; }
+  .old-section-title {
+    font-size: 14px; color: var(--text3); text-transform: uppercase;
+    letter-spacing: 2px; font-weight: 600; margin-bottom: 24px; padding-left: 4px;
+  }
+  .old-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px;
+  }
+  .old-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; overflow: hidden; transition: all 0.3s;
+    text-decoration: none; color: inherit; display: block;
+  }
+  .old-card:hover { border-color: var(--orange); transform: translateY(-4px); box-shadow: 0 12px 40px rgba(234,85,4,0.15); }
+  .old-card .card-img { width: 100%; height: 200px; object-fit: cover; border-bottom: 1px solid var(--border); }
+  .old-card .card-body { padding: 20px 24px; }
+  .old-card .card-name { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .old-card .card-sub { font-size: 13px; color: var(--text3); margin-bottom: 12px; }
+  .old-card .card-stats { display: flex; gap: 16px; margin-bottom: 12px; }
+  .old-card .cs-num { font-size: 22px; font-weight: 800; color: var(--orange); }
+  .old-card .cs-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; }
+  .old-card .card-desc { font-size: 13px; color: var(--text2); line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<!-- ── Preview Toggle ── -->
+<div class="preview-bar">
+  <div class="title"><span>Layout Preview</span> — A/B Compare</div>
+  <div class="toggle-group">
+    <button class="toggle-btn active" onclick="showLayout('new')">Proposed</button>
+    <button class="toggle-btn" onclick="showLayout('old')">Current</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!--  PROPOSED: Hero → 6 Cards → Brand Story → Footer        -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div id="layout-new" class="layout-wrap visible">
+
+  <div class="top-bar-line"></div>
+  <nav class="site-nav">
+    <img class="logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMkAAAAfCAMAAAB6fxkFAAAAaVBMVEUAAAD////pVQT////pVQT////pVQT////pVQT////pVQT////pVQT////pVQT////pVQT////pVQT////pVQT////pVQT////pVQT////98uz3vp7pVQT////pVQT////pVQT////pVQShvh4sAAAAIXRSTlMAEBAgIDAwQEBQUGBgcHCAgI+Pn5+vr7+/z8/Pz9/f7+/AFcCyAAADo0lEQVR42tWX23ajMAxFZUhirrUJEMMMwZj//8hZONgSxc2kTV/YT6IrJdblHCvgyJpOnmAl5hyOSjMvFDZmyhijUzgkcn5gu9IbC4cjMs4PJADk5oGCIzKvXAFAmBU4IhP25DcyuSQRvEeqlGpjGwoMXxO8JXl3upJCdqN90VvEZuG8hGcbvpxJNMwLDRDF58/LLm/djnF2wA85c1G6ampYKJfwDi8TNePcFeBceKF+9vHbvGPMCh/fvt8FXgpla9gvCbVKqRQAwx9yzvXzjg7zSpZ46J8/vv2NxlPBb2Jl38JXFFj7gJl/XyaozrfuseLWXU8YN/YUTC99rt1beaUqDp5buPanwMg1EbwEMysafkpH9pQB45zKvraxIKa9cgHKxxxgAOBiRw4LsfAos9ICxGWtNgh8bgEEPsRo2SBddZMkuZGdpTQPSs65+NT3i684ILRV1yRJGpw01psdPQNWmwAlCPMMDmeND96yWxxtgkQrRohwZKDy8nOrOqIZxj0CT+y+Qqecp8YRV4YU8R7IBPDD1tPswhvDHKADABNA4UDuabBVE12A5sheEw7fB5FjgYh33WMfQfAYfG2CH3hus7Z1RMj2dX+SyRwEPqijJUQnZehlvHVRTlekqnRRDVh9AqeWLdaT9mRPkUmSDcRDK1cwIUTrvvJZT8ato0ksi/t3rZTq0aK0C2M6zOkmwconSDNRNBPh9BINXhpwdXOC3lXj/oL3y2UITldYJpmgVx6OFM4T9WBDIjoZnDgCxkZArP0pIzlMt8xGy1GmrgBw7+hLeCB604vNsuvwjlF8JZM7NZrWHyicoOIu6gEFQTso6OBX9oWawRa5it3tbYrBf4nwxBuZZF4mKE8AICOlqP/UPsEKT0w7iBMlSoMoJ/cN2WSvEgvXL64NeOKtTK5eJtSicDDuLJzguQ93EDOptEGs7nqgRA1KhFXay4LV2mjBIAw9MZUJXTGx3BuLSoMerJmPth3ErumAm1EGsvkp7Drr/cyGGZ02TkQmdOjkn6BFlaWLBLWoPqWOTx+EIWwequBy25DhrEkNc0Aiud8LpgwCMrH8NUF6bULo3uywghVbdSCaBTemkahPkxq24DlN+6vkGuHFNGf0NhkTEHez457DuTV7araM8xaVf/oBo3lskBQQ4v4TlRkZVAVHQZLJKImhtziLB+E0oeKZxralqNajcLH3e2Hjs0aRW6HpHA5ElMkiWmOWi9J1IRaiPERH/gF7RzMLqhMdhgAAAABJRU5ErkJggg==" alt="Shadow Performance">
+    <div class="nav-links">
+      <a href="https://www.shadowmotor.com.tw" target="_blank">Official Site</a>
+      <a href="https://vehicle.shadolink.com/" target="_blank">Products</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero-new">
+    <div class="hero-inner">
+      <div class="hero-text">
+        <div class="hero-eyebrow">Shadow Performance</div>
+        <h1>Find Your<br><span class="accent">Compatible</span><br>Products</h1>
+        <p class="hero-desc">Complete vehicle compatibility database covering six product lines. Search by brand, model, or chassis code.</p>
+        <div class="stats-row">
+          <div><div class="stat-num">4,962</div><div class="stat-label">Vehicles</div></div>
+          <div><div class="stat-num">6</div><div class="stat-label">Products</div></div>
+          <div><div class="stat-num">108</div><div class="stat-label">Brands</div></div>
+        </div>
+      </div>
+      <div class="hero-image">
+        <img src="https://www.shadowmotor.com.tw/Templates/pic/Shadow%20PRO3%20racing%20gauge%20in%20HONDA%20FIT%20GE8%20(5).jpg" alt="Shadow PRO3 in Honda Fit GE8">
+      </div>
+    </div>
+  </section>
+
+  <!-- ALL 6 PRODUCT CARDS -->
+  <div class="section-bar">
+    <div class="section-title">Select a Product</div>
+    <div class="section-count">6 product lines</div>
+  </div>
+  <div class="product-section">
+    <div class="product-grid-new">
+
+      <a class="pcard" href="en/4s_compatibility.html">
+        <div class="pcard-img-wrap"><img class="pcard-img" src="https://cdn.ready-market.com.tw/0d9e0017/Templates/pic/m/Electronic-Throttle-Controller.jpg" alt="E-Drive 4S" style="object-position: center bottom;"></div>
+        <div class="pcard-body">
+          <div class="pcard-name">E-Drive 4S</div>
+          <div class="pcard-sub">Throttle Controller</div>
+          <div class="pcard-stats">
+            <div><div class="ps-num">899</div><div class="ps-label">Vehicles</div></div>
+            <div><div class="ps-num">77</div><div class="ps-label">Brands</div></div>
+          </div>
+          <div class="pcard-desc">Plug-and-play electronic throttle controller with multiple driving modes, covering the widest range of vehicles.</div>
+          <span class="pcard-cta">View List <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></span>
+        </div>
+      </a>
+
+      <a class="pcard" href="en/fdevo_compatibility.html">
+        <div class="pcard-img-wrap"><img class="pcard-img" src="https://cdn.ready-market.com.tw/0d9e0017/Templates/pic/m/FD%20EVO_Main_image_20250418.jpg" alt="FD-EVO" style="object-position: center top;"></div>
+        <div class="pcard-body">
+          <div class="pcard-name">FD-EVO</div>
+          <div class="pcard-sub">Multi-Function Display</div>
+          <div class="pcard-stats">
+            <div><div class="ps-num">86</div><div class="ps-label">Vehicles</div></div>
+            <div><div class="ps-num">24</div><div class="ps-label">Brands</div></div>
+          </div>
+          <div class="pcard-desc">OBD2 multi-function display supporting oil temp, transmission temp and real-time data monitoring.</div>
+          <span class="pcard-cta">View List <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></span>
+        </div>
+      </a>
+
+      <a class="pcard" href="en/dmeter2plus_compatibility.html">
+        <div class="pcard-img-wrap"><img class="pcard-img" src="https://cdn.ready-market.com.tw/0d9e0017/Templates/pic/m/D-METER%202%20PLUS_Main_image_20250418.jpg" alt="D-Meter 2Plus" style="object-position: center 30%;"></div>
+        <div class="pcard-body">
+          <div class="pcard-name">D-Meter 2Plus</div>
+          <div class="pcard-sub">OBD2 Digital Display</div>
+          <div class="pcard-stats">
+            <div><div class="ps-num">185</div><div class="ps-label">Vehicles</div></div>
+            <div><div class="ps-num">37</div><div class="ps-label">Brands</div></div>
+          </div>
+          <div class="pcard-desc">Advanced digital display with 12 sensor channels — coolant temp, RPM, boost pressure and more.</div>
+          <span class="pcard-cta">View List <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></span>
+        </div>
+      </a>
+
+      <a class="pcard" href="en/iboost2_compatibility.html">
+        <div class="pcard-img-wrap"><img class="pcard-img" src="https://cdn.ready-market.com.tw/0d9e0017/Templates/pic/I_BOOST2_Image_EN_20241004.jpg" alt="IBOOST2"></div>
+        <div class="pcard-body">
+          <div class="pcard-name">IBOOST2</div>
+          <div class="pcard-sub">Tuning Box</div>
+          <div class="pcard-stats">
+            <div><div class="ps-num">51</div><div class="ps-label">Vehicles</div></div>
+            <div><div class="ps-num">17</div><div class="ps-label">Brands</div></div>
+          </div>
+          <div class="pcard-desc">Turbo boost controller — plug-and-play for improved response and power with multiple modes.</div>
+          <span class="pcard-cta">View List <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></span>
+        </div>
+      </a>
+
+      <a class="pcard" href="en/valve_compatibility.html">
+        <div class="pcard-img-wrap"><img class="pcard-img" src="https://cdn.ready-market.com.tw/0d9e0017/Templates/pic/ELECTRIC_EXHAUST_VALVE_CONTROLLER_Image_EN_20250117.jpg" alt="Valve Controller"></div>
+        <div class="pcard-body">
+          <div class="pcard-name">Valve Controller</div>
+          <div class="pcard-sub">E-VALVE2 / X-FLAP</div>
+          <div class="pcard-stats">
+            <div><div class="ps-num">139</div><div class="ps-label">Vehicles</div></div>
+            <div><div class="ps-num">18</div><div class="ps-label">Brands</div></div>
+          </div>
+          <div class="pcard-desc">Electronic exhaust valve controller for precise exhaust sound control on demand.</div>
+          <span class="pcard-cta">View List <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></span>
+        </div>
+      </a>
+
+      <a class="pcard" href="en/stfilter_compatibility.html">
+        <div class="pcard-img-wrap"><img class="pcard-img" src="https://www.shadowmotor.com.tw/Templates/pic/ST-FILTER%20EN%20230919%20(1).jpg" alt="ST-Filter"></div>
+        <div class="pcard-body">
+          <div class="pcard-name">ST-Filter</div>
+          <div class="pcard-sub">High Flow Air Filter</div>
+          <div class="pcard-stats">
+            <div><div class="ps-num">3,746</div><div class="ps-label">Vehicles</div></div>
+            <div><div class="ps-num">77</div><div class="ps-label">Brands</div></div>
+          </div>
+          <div class="pcard-desc">High-flow replacement air filter — 972 in stock, 2,774 available to order.</div>
+          <span class="pcard-cta">View List <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- BRAND STORY BANNER -->
+  <div class="story-banner">
+    <div class="story-text">
+      <div class="story-eyebrow">Along With Shadow</div>
+      <div class="story-title">Gonna Be<br>Remarkable.</div>
+      <div class="story-desc">Precision engineering for racing and street performance. Let more people experience the pleasure and convenience of modified vehicles — that's our mission. Made in Taiwan.</div>
+      <a class="story-btn" href="https://www.shadowmotor.com.tw" target="_blank">
+        About Us
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m7 17 10-10M7 7h10v10"/></svg>
+      </a>
+    </div>
+    <div class="story-image">
+      <img src="https://www.shadowmotor.com.tw/Templates/pic/Shadow%20PRO3%20racing%20gauge%20in%20HONDA%20FIT%20GE8%20(2).jpg" alt="Shadow PRO3 in Honda Fit GE8">
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <span>&copy; 2026 Shadow Performance Electronics — AUTO JAW CO., LTD.</span>
+    &nbsp;&middot;&nbsp;
+    <a href="https://www.shadowmotor.com.tw" target="_blank">www.shadowmotor.com.tw</a>
+  </footer>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!--  CURRENT: Original layout for comparison                 -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div id="layout-old" class="layout-wrap">
+
+  <div class="top-bar-line"></div>
+  <nav class="site-nav">
+    <img class="logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMkAAAAfCAMAAAB6fxkFAAAAaVBMVEUAAAD////pVQT////pVQT////pVQT////pVQT////pVQT////pVQT////pVQT////pVQT////pVQT////pVQT////pVQT////pVQT////98uz3vp7pVQT////pVQT////pVQT////pVQShvh4sAAAAIXRSTlMAEBAgIDAwQEBQUGBgcHCAgI+Pn5+vr7+/z8/Pz9/f7+/AFcCyAAADo0lEQVR42tWX23ajMAxFZUhirrUJEMMMwZj//8hZONgSxc2kTV/YT6IrJdblHCvgyJpOnmAl5hyOSjMvFDZmyhijUzgkcn5gu9IbC4cjMs4PJADk5oGCIzKvXAFAmBU4IhP25DcyuSQRvEeqlGpjGwoMXxO8JXl3upJCdqN90VvEZuG8hGcbvpxJNMwLDRDF58/LLm/djnF2wA85c1G6ampYKJfwDi8TNePcFeBceKF+9vHbvGPMCh/fvt8FXgpla9gvCbVKqRQAwx9yzvXzjg7zSpZ46J8/vv2NxlPBb2Jl38JXFFj7gJl/XyaozrfuseLWXU8YN/YUTC99rt1beaUqDp5buPanwMg1EbwEMysafkpH9pQB45zKvraxIKa9cgHKxxxgAOBiRw4LsfAos9ICxGWtNgh8bgEEPsRo2SBddZMkuZGdpTQPSs65+NT3i684ILRV1yRJGpw01psdPQNWmwAlCPMMDmeND96yWxxtgkQrRohwZKDy8nOrOqIZxj0CT+y+Qqecp8YRV4YU8R7IBPDD1tPswhvDHKADABNA4UDuabBVE12A5sheEw7fB5FjgYh33WMfQfAYfG2CH3hus7Z1RMj2dX+SyRwEPqijJUQnZehlvHVRTlekqnRRDVh9AqeWLdaT9mRPkUmSDcRDK1cwIUTrvvJZT8ato0ksi/t3rZTq0aK0C2M6zOkmwconSDNRNBPh9BINXhpwdXOC3lXj/oL3y2UITldYJpmgVx6OFM4T9WBDIjoZnDgCxkZArP0pIzlMt8xGy1GmrgBw7+hLeCB604vNsuvwjlF8JZM7NZrWHyicoOIu6gEFQTso6OBX9oWawRa5it3tbYrBf4nwxBuZZF4mKE8AICOlqP/UPsEKT0w7iBMlSoMoJ/cN2WSvEgvXL64NeOKtTK5eJtSicDDuLJzguQ93EDOptEGs7nqgRA1KhFXay4LV2mjBIAw9MZUJXTGx3BuLSoMerJmPth3ErumAm1EGsvkp7Drr/cyGGZ02TkQmdOjkn6BFlaWLBLWoPqWOTx+EIWwequBy25DhrEkNc0Aiud8LpgwCMrH8NUF6bULo3uywghVbdSCaBTemkahPkxq24DlN+6vkGuHFNGf0NhkTEHez457DuTV7araM8xaVf/oBo3lskBQQ4v4TlRkZVAVHQZLJKImhtziLB+E0oeKZxralqNajcLH3e2Hjs0aRW6HpHA5ElMkiWmOWi9J1IRaiPERH/gF7RzMLqhMdhgAAAABJRU5ErkJggg==" alt="Shadow Performance">
+    <div class="nav-links">
+      <a href="https://www.shadowmotor.com.tw" target="_blank">Official Site</a>
+    </div>
+  </nav>
+
+  <section class="old-hero">
+    <h1>Compatibility List<br><span class="accent">Overview</span></h1>
+    <p class="subtitle">Vehicle Compatibility Database</p>
+    <p class="hero-desc">Shadow Performance complete vehicle compatibility database covering five product lines with real-time search and filtering.</p>
+    <div class="old-stats">
+      <div class="old-stat"><div class="num">1,064</div><div class="label">Vehicles</div></div>
+      <div class="old-stat"><div class="num">6</div><div class="label">Products</div></div>
+      <div class="old-stat"><div class="num">62</div><div class="label">Brands</div></div>
+    </div>
+  </section>
+
+  <section class="old-products">
+    <div class="old-section-title">SELECT A PRODUCT TO VIEW COMPATIBILITY</div>
+    <div class="old-grid">
+      <a class="old-card" href="en/4s_compatibility.html"><img class="card-img" src="https://cdn.ready-market.com.tw/0d9e0017/Templates/pic/m/Electronic-Throttle-Controller.jpg" alt="" style="object-fit:cover;object-position:center bottom;"><div class="card-body"><div class="card-name">E-Drive 4S Throttle Controller</div><div class="card-sub">E-Drive 4S Throttle Controller</div><div class="card-stats"><div><span class="cs-num">892</span> <span class="cs-label">vehicles</span></div><div><span class="cs-num">62</span> <span class="cs-label">brands</span></div></div><div class="card-desc">Plug-and-play electronic throttle controller with multiple driving modes.</div></div></a>
+      <a class="old-card" href="en/fdevo_compatibility.html"><img class="card-img" src="https://cdn.ready-market.com.tw/0d9e0017/Templates/pic/m/FD%20EVO_Main_image_20250418.jpg" alt="" style="object-fit:cover;object-position:center top;"><div class="card-body"><div class="card-name">FD-EVO Multi-Function Display</div><div class="card-sub">FD-EVO Multi-Function Display</div><div class="card-stats"><div><span class="cs-num">57</span> <span class="cs-label">vehicles</span></div></div><div class="card-desc">OBD2 multi-function display supporting oil temp and real-time data.</div></div></a>
+      <a class="old-card" href="en/dmeter2plus_compatibility.html"><img class="card-img" src="https://cdn.ready-market.com.tw/0d9e0017/Templates/pic/m/D-METER%202%20PLUS_Main_image_20250418.jpg" alt="" style="object-fit:cover;object-position:center 30%;"><div class="card-body"><div class="card-name">D-Meter 2Plus OBD2 Display</div><div class="card-sub">D-Meter 2Plus OBD2 Display</div><div class="card-stats"><div><span class="cs-num">149</span> <span class="cs-label">vehicles</span></div></div><div class="card-desc">Advanced digital display with 12 sensor channels.</div></div></a>
+      <a class="old-card" href="en/iboost2_compatibility.html"><img class="card-img" src="https://cdn.ready-market.com.tw/0d9e0017/Templates/pic/I_BOOST2_Image_EN_20241004.jpg" alt=""><div class="card-body"><div class="card-name">IBOOST2 Tuning Box</div><div class="card-sub">IBOOST2 Tuning Box</div><div class="card-stats"><div><span class="cs-num">51</span> <span class="cs-label">vehicles</span></div></div><div class="card-desc">Turbo boost controller for improved response and power.</div></div></a>
+      <a class="old-card" href="en/valve_compatibility.html"><img class="card-img" src="https://cdn.ready-market.com.tw/0d9e0017/Templates/pic/ELECTRIC_EXHAUST_VALVE_CONTROLLER_Image_EN_20250117.jpg" alt=""><div class="card-body"><div class="card-name">Valve Controller</div><div class="card-sub">E-VALVE2 / X-FLAP</div><div class="card-stats"><div><span class="cs-num">136</span> <span class="cs-label">vehicles</span></div></div><div class="card-desc">Electronic exhaust valve controller for precise sound control.</div></div></a>
+      <a class="old-card" href="en/stfilter_compatibility.html"><img class="card-img" src="https://www.shadowmotor.com.tw/Templates/pic/ST-FILTER%20EN%20230919%20(1).jpg" alt=""><div class="card-body"><div class="card-name">ST-Filter Air Filter</div><div class="card-sub">High-Performance Replacement Air Filter</div><div class="card-stats"><div><span class="cs-num">3,746</span> <span class="cs-label">vehicles</span></div></div><div class="card-desc">High-flow replacement air filter. 972 in stock, 2,774 to order.</div></div></a>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <span>&copy; 2026 Shadow Performance Electronics — AUTO JAW CO., LTD.</span>
+    &nbsp;&middot;&nbsp;
+    <a href="https://www.shadowmotor.com.tw" target="_blank">www.shadowmotor.com.tw</a>
+  </footer>
+</div>
+
+<script>
+function showLayout(which) {
+  document.querySelectorAll('.layout-wrap').forEach(s => s.classList.remove('visible'));
+  document.getElementById('layout-' + which).classList.add('visible');
+  document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+
+</body>
+</html>
