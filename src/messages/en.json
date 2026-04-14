@@ -1,0 +1,103 @@
+{
+  "nav": {
+    "officialSite": "Official Site",
+    "products": "Products"
+  },
+  "home": {
+    "eyebrow": "Shadow Performance",
+    "title": "Find Your",
+    "titleAccent": "Compatible",
+    "titleEnd": "Products",
+    "description": "Complete vehicle compatibility database covering six product lines. Search by brand, model, or chassis code.",
+    "statVehicles": "Vehicles",
+    "statProducts": "Products",
+    "statBrands": "Brands",
+    "selectProduct": "Select a Product",
+    "productLines": "{count} product lines"
+  },
+  "product": {
+    "searchPlaceholder": "Search by brand, model, chassis code...",
+    "allBrands": "All Brands",
+    "vehicles": "vehicles",
+    "brands": "Brands",
+    "viewList": "View List",
+    "noResults": "No matching vehicles found",
+    "page": "Page {current} of {total}",
+    "backToHome": "All Products",
+    "inStock": "In Stock",
+    "orderAvailable": "Order Available",
+    "verified": "Verified",
+    "unverified": "Unverified"
+  },
+  "story": {
+    "eyebrow": "Along With Shadow",
+    "title1": "Gonna Be",
+    "title2": "Remarkable.",
+    "description": "Precision engineering for racing and street performance. Let more people experience the pleasure and convenience of modified vehicles — that's our mission. Made in Taiwan.",
+    "cta": "About Us"
+  },
+  "products": {
+    "4s": {
+      "name": "E-Drive 4S",
+      "subtitle": "Throttle Controller",
+      "description": "Plug-and-play electronic throttle controller with multiple driving modes, covering the widest range of vehicles."
+    },
+    "fdevo": {
+      "name": "FD-EVO",
+      "subtitle": "Multi-Function Display",
+      "description": "OBD2 multi-function display supporting oil temp, transmission temp and real-time data monitoring."
+    },
+    "dmeter2plus": {
+      "name": "D-Meter 2Plus",
+      "subtitle": "OBD2 Digital Display",
+      "description": "Advanced digital display with 12 sensor channels — coolant temp, RPM, boost pressure and more."
+    },
+    "iboost2": {
+      "name": "IBOOST2",
+      "subtitle": "Tuning Box",
+      "description": "Turbo boost controller — plug-and-play for improved response and power with multiple modes."
+    },
+    "valve": {
+      "name": "Valve Controller",
+      "subtitle": "E-VALVE2 / X-FLAP",
+      "description": "Electronic exhaust valve controller for precise exhaust sound control on demand."
+    },
+    "stfilter": {
+      "name": "ST-Filter",
+      "subtitle": "High Flow Air Filter",
+      "description": "High-flow replacement air filter — bolt-on performance with filtration you can trust."
+    }
+  },
+  "table": {
+    "brand": "Brand",
+    "model": "Model",
+    "chassis": "Chassis",
+    "year": "Year",
+    "engine": "Engine",
+    "harness": "Harness",
+    "controller": "Controller",
+    "connector": "Connector",
+    "knNumber": "K&N #",
+    "swCode": "SW Code",
+    "stock": "Stock",
+    "oilTemp": "Oil Temp",
+    "transTemp": "Trans Temp",
+    "basicInfo": "Basic Info",
+    "fuel": "Fuel",
+    "coolant": "Coolant",
+    "boost": "Boost",
+    "egt": "EGT",
+    "intakeTemp": "Intake",
+    "voltage": "Voltage",
+    "speed": "Speed",
+    "rpm": "RPM",
+    "mileage": "Mileage",
+    "afr": "AFR",
+    "supported": "Supported",
+    "expandAll": "Expand All",
+    "collapseAll": "Collapse All"
+  },
+  "footer": {
+    "copyright": "© {year} Shadow Performance Electronics — AUTO JAW CO., LTD."
+  }
+}

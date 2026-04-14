@@ -1,0 +1,103 @@
+{
+  "nav": {
+    "officialSite": "官方網站",
+    "products": "產品介紹"
+  },
+  "home": {
+    "eyebrow": "Shadow Performance",
+    "title": "查詢你的",
+    "titleAccent": "相容",
+    "titleEnd": "產品",
+    "description": "涵蓋六大產品線的完整車種相容性資料庫。透過品牌、車型或底盤代號搜尋。",
+    "statVehicles": "車種",
+    "statProducts": "產品",
+    "statBrands": "品牌",
+    "selectProduct": "選擇產品",
+    "productLines": "{count} 個產品線"
+  },
+  "product": {
+    "searchPlaceholder": "搜尋品牌、車型、底盤代號...",
+    "allBrands": "全部品牌",
+    "vehicles": "車種",
+    "brands": "品牌",
+    "viewList": "查看列表",
+    "noResults": "找不到符合的車種",
+    "page": "第 {current} 頁，共 {total} 頁",
+    "backToHome": "全部產品",
+    "inStock": "有庫存",
+    "orderAvailable": "可訂購",
+    "verified": "已驗證",
+    "unverified": "未驗證"
+  },
+  "story": {
+    "eyebrow": "Along With Shadow",
+    "title1": "Gonna Be",
+    "title2": "Remarkable.",
+    "description": "專注於賽道與街道性能的精密工程。讓更多人體驗改裝車的樂趣與便利——這是我們的使命。台灣製造。",
+    "cta": "關於我們"
+  },
+  "products": {
+    "4s": {
+      "name": "E-Drive 4S",
+      "subtitle": "電子油門控制器",
+      "description": "隨插即用的電子油門控制器，多種駕駛模式，涵蓋最廣泛的車種。"
+    },
+    "fdevo": {
+      "name": "FD-EVO",
+      "subtitle": "多功能顯示器",
+      "description": "OBD2 多功能顯示器，支援油溫、變速箱溫度與即時數據監控。"
+    },
+    "dmeter2plus": {
+      "name": "D-Meter 2Plus",
+      "subtitle": "OBD2 數位顯示器",
+      "description": "進階數位顯示器，12 組感測通道——水溫、轉速、渦輪增壓等。"
+    },
+    "iboost2": {
+      "name": "IBOOST2",
+      "subtitle": "渦輪增壓控制器",
+      "description": "渦輪增壓控制器——隨插即用，多種模式提升反應與動力。"
+    },
+    "valve": {
+      "name": "閥門控制器",
+      "subtitle": "E-VALVE2 / X-FLAP",
+      "description": "電子排氣閥門控制器，精準控制排氣聲浪。"
+    },
+    "stfilter": {
+      "name": "ST-Filter",
+      "subtitle": "高流量空氣濾芯",
+      "description": "高流量替換型空氣濾芯——直上提升性能，值得信賴的過濾效能。"
+    }
+  },
+  "table": {
+    "brand": "品牌",
+    "model": "車型",
+    "chassis": "底盤",
+    "year": "年份",
+    "engine": "引擎",
+    "harness": "線組",
+    "controller": "控制器",
+    "connector": "接頭",
+    "knNumber": "K&N 料號",
+    "swCode": "SW 料號",
+    "stock": "庫存",
+    "oilTemp": "油溫",
+    "transTemp": "變速箱油溫",
+    "basicInfo": "基本資訊",
+    "fuel": "燃料",
+    "coolant": "水溫",
+    "boost": "渦輪",
+    "egt": "排溫",
+    "intakeTemp": "進氣溫",
+    "voltage": "電壓",
+    "speed": "時速",
+    "rpm": "轉速",
+    "mileage": "里程",
+    "afr": "空燃比",
+    "supported": "可顯示項目",
+    "expandAll": "全部展開",
+    "collapseAll": "全部收合"
+  },
+  "footer": {
+    "copyright": "© {year} Shadow Performance Electronics — 丞桀股份有限公司"
+  }
+}
