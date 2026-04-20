@@ -28,6 +28,7 @@ export const PRODUCT_DATA_SOURCES: Record<string, string> = {
   dmeter2plus: "31f0520b-2dc7-8193-877c-000ba97ce569",
   iboost2: "31f0520b-2dc7-8182-b16d-000b16dee21e",
   valve: "31f0520b-2dc7-817e-81f6-000b8cbf9d36",
+  stfilter: "4c9164b4-c4bf-4329-b6fa-91426e9a3465",
 };
 
 export const VEHICLE_MASTER_DS = "31f0520b-2dc7-8076-904d-000b216c4088";

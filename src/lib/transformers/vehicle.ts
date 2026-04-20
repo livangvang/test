@@ -2,7 +2,7 @@ import type {
   PageObjectResponse,
   RichTextItemResponse,
 } from "@notionhq/client/build/src/api-endpoints/common";
-import type { ProductVehicle } from "@/lib/types/vehicle";
+import type { ProductVehicle, STFilterVehicle } from "@/lib/types/vehicle";
 
 type Properties = PageObjectResponse["properties"];
 type PropertyValue = Properties[string];
@@ -159,4 +159,27 @@ export function transformProductVehicle(
   }
 
   return base;
+}
+
+/** Transform a Notion page from the st-filter auto ai DB into a STFilterVehicle */
+export function transformSTFilterVehicle(page: PageObjectResponse): STFilterVehicle {
+  const p = page.properties;
+  return {
+    brand: tryFields(p, "Brand"),
+    model: tryFields(p, "Model"),
+    chassis: tryFields(p, "Chassis"),
+    year: tryFields(p, "Year"),
+    engine: tryFields(p, "Engine"),
+    knNumber: tryFields(p, "ST-Filter"),
+    swCode: tryFields(p, "SW品號") || null,
+    oemNumber: tryFields(p, "OEM料號"),
+    shape: tryFields(p, "Shape"),
+    packageContents: tryFields(p, "Package_Contents"),
+    inStock: true,
+    outsideLength: tryFields(p, "Length") || null,
+    outsideWidth: tryFields(p, "Width") || null,
+    height: tryFields(p, "Height") || null,
+    weight: tryFields(p, "Weight") || null,
+    notes: tryFields(p, "Notes") || null,
+  };
 }

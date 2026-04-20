@@ -38,18 +38,22 @@ export interface ProductVehicle {
   version?: string;
 }
 
-/** ST-Filter record (from JSON, not Notion) */
+/** ST-Filter record (from Notion DB: st-filter auto ai) */
 export interface STFilterVehicle {
   brand: string;
   model: string;
   chassis: string;
   year: string;
   engine: string;
-  knNumber: string;
-  swCode: string | null;
-  inStock: boolean;
-  outsideLength: number | null;
-  outsideWidth: number | null;
-  height: number | null;
-  weight: number | null;
+  knNumber: string;         // ST-Filter column in Notion
+  swCode: string | null;    // SW品號 column
+  oemNumber: string;        // OEM料號 column
+  shape: string;            // Shape: Panel / Round / Cone / Trapezoidal
+  packageContents: string;  // Package_Contents column
+  inStock: boolean;         // Defaults to true (not in Notion)
+  outsideLength: string | null;  // Length (stored as text in Notion)
+  outsideWidth: string | null;   // Width
+  height: string | null;
+  weight: string | null;
+  notes: string | null;     // Notes column
 }

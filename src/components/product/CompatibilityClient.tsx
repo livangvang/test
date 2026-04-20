@@ -139,6 +139,10 @@ const TABLE_COLUMNS: Record<string, Column[]> = {
   stfilter: [
     ...COMMON_COLS,
     { key: "knNumber", labelKey: "knNumber", type: "text" },
+    { key: "swCode", labelKey: "swCode", type: "text" },
+    { key: "oemNumber", labelKey: "oemNumber", type: "text" },
+    { key: "shape", labelKey: "shape", type: "text" },
+    { key: "packageContents", labelKey: "packageContents", type: "text" },
     { key: "inStock", labelKey: "stock", type: "stock" },
   ],
 };
