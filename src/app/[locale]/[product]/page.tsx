@@ -6,7 +6,7 @@ import { getProductData, getSTFilterData, getProductStats } from "@/lib/queries/
 import { StatsHeader } from "@/components/product/StatsHeader";
 import { CompatibilityClient } from "@/components/product/CompatibilityClient";
 
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
