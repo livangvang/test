@@ -6,7 +6,7 @@ import { StoryBanner } from "@/components/home/StoryBanner";
 import { PRODUCTS } from "@/lib/types/product";
 import { getProductStats } from "@/lib/queries/products";
 
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,

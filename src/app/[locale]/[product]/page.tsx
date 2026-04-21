@@ -1,23 +1,12 @@
 import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
-import { routing } from "@/i18n/routing";
 import { PRODUCT_SLUGS } from "@/lib/types/product";
 import { getProductData, getSTFilterData, getProductStats } from "@/lib/queries/products";
 import { StatsHeader } from "@/components/product/StatsHeader";
 import { CompatibilityClient } from "@/components/product/CompatibilityClient";
 
-export const revalidate = 300;
-
-export function generateStaticParams() {
-  const params: { locale: string; product: string }[] = [];
-  for (const locale of routing.locales) {
-    for (const product of PRODUCT_SLUGS) {
-      params.push({ locale, product });
-    }
-  }
-  return params;
-}
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
