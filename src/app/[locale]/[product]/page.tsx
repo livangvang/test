@@ -7,6 +7,8 @@ import { getProductData, getSTFilterData, getProductStats } from "@/lib/queries/
 import { StatsHeader } from "@/components/product/StatsHeader";
 import { CompatibilityClient } from "@/components/product/CompatibilityClient";
 
+export const revalidate = 300;
+
 export function generateStaticParams() {
   const params: { locale: string; product: string }[] = [];
   for (const locale of routing.locales) {

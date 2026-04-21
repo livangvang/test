@@ -1,6 +1,3 @@
-"use cache";
-
-import { cacheLife } from "next/cache";
 import { notion } from "@/lib/notion";
 import {
   transformProductVehicle,
@@ -79,7 +76,6 @@ function groupByBrand(
 export async function getProductData(
   slug: string
 ): Promise<Record<string, ProductVehicle[]>> {
-  cacheLife("minutes");
 
   const dataSourceId = PRODUCT_DATA_SOURCES[slug];
   if (!dataSourceId) {
@@ -97,7 +93,6 @@ export async function getProductData(
 export async function getSTFilterData(): Promise<
   Record<string, STFilterVehicle[]>
 > {
-  cacheLife("minutes");
 
   const dataSourceId = PRODUCT_DATA_SOURCES["stfilter"];
   if (!dataSourceId) {
@@ -128,7 +123,6 @@ export async function getSTFilterData(): Promise<
 
 /** Get stats for a product */
 export async function getProductStats(slug: string): Promise<ProductStats> {
-  cacheLife("minutes");
 
   if (slug === "stfilter") {
     const data = await getSTFilterData();
