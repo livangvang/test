@@ -75,9 +75,9 @@ export async function StatsHeader({ slug, stats }: StatsHeaderProps) {
             </div>
           </div>
 
-          {/* Product image */}
+          {/* Product image — 跟首頁 ProductCard 相同做法：固定高度 + object-cover */}
           {product?.image && (
-            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-border bg-bg3 md:w-[45%]">
+            <div className="relative h-[220px] w-full overflow-hidden rounded-2xl border border-border bg-bg3 md:w-[45%]">
               <Image
                 src={product.image}
                 alt={tProducts("name")}
