@@ -1,0 +1,54 @@
+- generic [ref=e2]:
+  - navigation [ref=e3]:
+    - link "關於 Google" [ref=e4] [cursor=pointer]:
+      - /url: https://about.google/?fg=1&utm_source=google-&utm_medium=referral&utm_campaign=hp-header
+    - link "Google 商店" [ref=e5] [cursor=pointer]:
+      - /url: https://store.google.com/?utm_source=hp_header&utm_medium=google_ooo&utm_campaign=GS100042&hl=zh-TW-
+    - generic [ref=e7]:
+      - generic [ref=e8]:
+        - link "Gmail" [ref=e10] [cursor=pointer]:
+          - /url: https://mail.google.com/mail/&ogbl
+        - link "搜尋圖片" [ref=e12] [cursor=pointer]:
+          - /url: https://www.google.com/imghp?hl=zh-TW&ogbl
+          - text: 圖片
+      - button "Google 應用程式" [ref=e15] [cursor=pointer]:
+        - img [ref=e16]
+      - link "登入" [ref=e20] [cursor=pointer]:
+        - /url: https://accounts.google.com/ServiceLogin?hl=zh-TW&passive=true&continue=https://www.google.com/&ec=futura_exp_og_so_72776762_e
+  - generic [ref=e22]:
+    - link "2026 世界量子日" [ref=e23] [cursor=pointer]:
+      - /url: /search?sca_esv=51551707418ed362&q=%E4%B8%96%E7%95%8C%E9%87%8F%E5%AD%90%E6%97%A5&oi=ddle&noiga=1&ct=460150345&hl=zh-TW&si=AL3DRZHmwLjWhgnaPB3UTu10R6S5qNLXiQiKMeezfKyB1FMsRuhRvm7pM0XsgFMDuGgEQ4zVLycCMxDp5a5k8pcTDVvjuAug8hmU0JZH9iahlhOF97AyXuZ-bOP5GcU7aAmZnaihfT1zFRB0wyDr9izLUcNW8QJoBdb3vziTmk30R6AXOSVXllk%3D&sa=X&ved=0ahUKEwijmr-f0-yTAxXH1zQHHcUAD3sQPQgE
+      - img "2026 世界量子日" [ref=e25]
+    - button "分享" [ref=e27]:
+      - generic "分享" [ref=e28] [cursor=pointer]:
+        - img [ref=e32]
+  - search [ref=e35]:
+    - generic [ref=e37]:
+      - generic [ref=e39]:
+        - img [ref=e43]
+        - combobox "搜尋" [active] [ref=e46]
+        - generic [ref=e48]:
+          - button "語音搜尋" [ref=e49] [cursor=pointer]:
+            - img [ref=e50]
+          - button "以圖搜尋" [ref=e52] [cursor=pointer]:
+            - img [ref=e53]
+      - generic [ref=e56]:
+        - button "Google 搜尋" [ref=e57] [cursor=pointer]
+        - button "好手氣" [ref=e58] [cursor=pointer]
+  - contentinfo [ref=e61]:
+    - generic [ref=e62]: 台灣
+    - generic [ref=e63]:
+      - generic [ref=e64]:
+        - link "廣告" [ref=e65] [cursor=pointer]:
+          - /url: https://www.google.com/intl/zh-TW_tw/ads/?subid=ww-ww-et-g-awa-a-g_hpafoot1_1!o2&utm_source=google.com&utm_medium=referral&utm_campaign=google_hpafooter&fg=1
+        - link "商業" [ref=e66] [cursor=pointer]:
+          - /url: https://www.google.com/services/?subid=ww-ww-et-g-awa-a-g_hpbfoot1_1!o2&utm_source=google.com&utm_medium=referral&utm_campaign=google_hpbfooter&fg=1
+        - link "搜尋服務的運作方式" [ref=e67] [cursor=pointer]:
+          - /url: https://google.com/search/howsearchworks/?fg=1
+      - generic [ref=e68]:
+        - link "隱私權" [ref=e69] [cursor=pointer]:
+          - /url: https://policies.google.com/privacy?hl=zh-TW&fg=1
+        - link "服務條款" [ref=e70] [cursor=pointer]:
+          - /url: https://policies.google.com/terms?hl=zh-TW&fg=1
+        - button "設定" [ref=e74] [cursor=pointer]:
+          - generic [ref=e75]: 設定
