@@ -1,10 +1,32 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useCompatibility } from "@/hooks/useCompatibility";
 import { SearchBar } from "./SearchBar";
 import type { ProductVehicle, STFilterVehicle } from "@/lib/types/vehicle";
+
+type AnyVehicle = ProductVehicle | STFilterVehicle;
+
+function mergeIntoGrouped(
+  existing: Record<string, AnyVehicle[]>,
+  incoming: AnyVehicle[]
+): Record<string, AnyVehicle[]> {
+  const merged: Record<string, AnyVehicle[]> = {};
+  for (const [brand, list] of Object.entries(existing)) {
+    merged[brand] = [...list];
+  }
+  for (const v of incoming) {
+    const brand = v.brand || "Unknown";
+    if (!merged[brand]) merged[brand] = [];
+    merged[brand].push(v);
+  }
+  const sorted: Record<string, AnyVehicle[]> = {};
+  for (const brand of Object.keys(merged).sort()) {
+    sorted[brand] = [...merged[brand]].sort((a, b) => a.model.localeCompare(b.model));
+  }
+  return sorted;
+}
 
 // ─── Feature definitions for card view (FD-EVO / D-Meter) ───
 
@@ -156,13 +178,21 @@ const CARD_PRODUCTS: Record<string, Feature[]> = {
 // ─── Main Component ───
 
 interface CompatibilityClientProps {
-  groupedData: Record<string, (ProductVehicle | STFilterVehicle)[]>;
+  groupedData: Record<string, AnyVehicle[]>;
   slug: string;
+  initialCursor?: string | null;
 }
 
-export function CompatibilityClient({ groupedData, slug }: CompatibilityClientProps) {
+export function CompatibilityClient({
+  groupedData: initialData,
+  slug,
+  initialCursor = null,
+}: CompatibilityClientProps) {
   const t = useTranslations("product");
   const tTable = useTranslations("table");
+
+  const [groupedData, setGroupedData] = useState(initialData);
+  const [loadingMore, setLoadingMore] = useState(!!initialCursor);
 
   const { query, setQuery, displayData, totalVisible } = useCompatibility({
     groupedData,
@@ -170,8 +200,47 @@ export function CompatibilityClient({ groupedData, slug }: CompatibilityClientPr
   });
 
   const [expandedBrands, setExpandedBrands] = useState<Set<string>>(
-    () => new Set(Object.keys(groupedData))
+    () => new Set(Object.keys(initialData))
   );
+
+  // Background progressive loading: keep fetching next pages until cursor is null
+  useEffect(() => {
+    if (!initialCursor) return;
+    let cancelled = false;
+    let cursor: string | null = initialCursor;
+
+    (async () => {
+      while (cursor && !cancelled) {
+        try {
+          const res = await fetch(
+            `/api/vehicles/${slug}?cursor=${encodeURIComponent(cursor)}`
+          );
+          if (!res.ok) break;
+          const data = (await res.json()) as {
+            vehicles: AnyVehicle[];
+            nextCursor: string | null;
+          };
+          if (cancelled) break;
+          setGroupedData((prev) => mergeIntoGrouped(prev, data.vehicles));
+          setExpandedBrands((prev) => {
+            const next = new Set(prev);
+            for (const v of data.vehicles) {
+              next.add(v.brand || "Unknown");
+            }
+            return next;
+          });
+          cursor = data.nextCursor;
+        } catch {
+          break;
+        }
+      }
+      if (!cancelled) setLoadingMore(false);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [slug, initialCursor]);
 
   const displayBrands = useMemo(() => Object.keys(displayData), [displayData]);
   const allExpanded = displayBrands.every((b) => expandedBrands.has(b));
@@ -229,6 +298,12 @@ export function CompatibilityClient({ groupedData, slug }: CompatibilityClientPr
             {totalVisible.toLocaleString()} {t("vehicles")}
             {" · "}
             {displayBrands.length} {t("brands")}
+            {loadingMore && (
+              <span className="ml-2 inline-flex items-center gap-1.5 text-xs text-orange">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-orange" />
+                {t("loadingMore")}
+              </span>
+            )}
           </div>
           <button
             onClick={toggleAll}

@@ -27,7 +27,8 @@
     "inStock": "In Stock",
     "orderAvailable": "Order Available",
     "verified": "Verified",
-    "unverified": "Unverified"
+    "unverified": "Unverified",
+    "loadingMore": "loading more..."
   },
   "story": {
     "eyebrow": "Along With Shadow",

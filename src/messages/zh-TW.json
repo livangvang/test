@@ -27,7 +27,8 @@
     "inStock": "有庫存",
     "orderAvailable": "可訂購",
     "verified": "已驗證",
-    "unverified": "未驗證"
+    "unverified": "未驗證",
+    "loadingMore": "載入剩餘資料中..."
   },
   "story": {
     "eyebrow": "Along With Shadow",
