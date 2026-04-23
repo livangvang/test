@@ -24,7 +24,7 @@ export interface ProductStats {
 /** Notion Data Source ID mapping (SDK v5 uses dataSources.query) */
 export const PRODUCT_DATA_SOURCES: Record<string, string> = {
   "4s": "31f0520b-2dc7-81cc-aabc-000b388cc1eb",
-  fdevo: "31f0520b-2dc7-8171-814f-000b418c0cee",
+  fdevo: "381d87fc-199d-4beb-a06a-86e89dfb06d6",
   dmeter2plus: "31f0520b-2dc7-8193-877c-000ba97ce569",
   iboost2: "31f0520b-2dc7-8182-b16d-000b16dee21e",
   valve: "31f0520b-2dc7-817e-81f6-000b8cbf9d36",

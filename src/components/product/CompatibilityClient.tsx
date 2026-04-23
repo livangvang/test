@@ -377,6 +377,26 @@ function VehicleCard({
             {vehicle.engine}
           </span>
         )}
+        {vehicle.fuel && (
+          <span
+            className="font-brand px-1.5 py-0.5 text-[10px] font-black tracking-[1px]"
+            style={
+              vehicle.fuel === "DIESEL"
+                ? {
+                    color: "#facc15",
+                    background: "rgba(250,204,21,0.1)",
+                    border: "1px solid rgba(250,204,21,0.4)",
+                  }
+                : {
+                    color: "#EA5504",
+                    background: "rgba(234,85,4,0.1)",
+                    border: "1px solid rgba(234,85,4,0.4)",
+                  }
+            }
+          >
+            {vehicle.fuel}
+          </span>
+        )}
       </div>
 
       <div className="mb-3 flex flex-wrap items-center gap-2">
