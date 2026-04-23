@@ -38,8 +38,15 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Chinese text should never be uppercased; prefer CJK font-first for zh pages */
-:lang(zh), :lang(zh-TW), .zh {
+/*
+ * Only explicit CJK content (.zh class, applied in JSX when name has CJK chars)
+ * overrides to Noto Sans TC and drops uppercase.
+ *
+ * We intentionally DO NOT override .font-display / .font-brand at lang(zh) level,
+ * because a zh page can still show an English wordmark (e.g. "ST-Filter") and
+ * we want it to use Eurostar Extended with uppercase, identical to /en.
+ */
+.zh {
   font-family: var(--font-noto-tc), var(--font-inter), -apple-system, sans-serif;
   text-transform: none !important;
   letter-spacing: 0.02em;
@@ -49,16 +56,6 @@ body {
 .font-display { font-family: var(--font-display); }
 .font-brand   { font-family: var(--font-brand); }
 .font-mono    { font-family: var(--font-mono); }
-
-/* Chinese variant — suppress brand-font uppercase when inside zh */
-:lang(zh) .font-display,
-:lang(zh-TW) .font-display,
-:lang(zh) .font-brand,
-:lang(zh-TW) .font-brand {
-  font-family: var(--font-noto-tc), var(--font-eurostar), sans-serif;
-  text-transform: none;
-  letter-spacing: 0;
-}
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; }
