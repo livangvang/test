@@ -30,6 +30,32 @@
     "unverified": "Unverified",
     "loadingMore": "loading more..."
   },
+  "productSpecs": {
+    "ctaLearnMore": "Learn More",
+    "stfilter": {
+      "eyebrow": "FLOW · SPEED · STABILITY",
+      "tagline": "See the results. Don't just feel it.",
+      "spec1Value": "+88%",
+      "spec1Label": "Air Flow",
+      "spec1Sub": "",
+      "spec2Value": "+32%",
+      "spec2Label": "Fiber Density",
+      "spec2Sub": "vs paper filter",
+      "spec3Value": "+3~5%",
+      "spec3Label": "HP / Torque",
+      "spec3Sub": "dyno tested",
+      "spec4Value": "210g/s",
+      "spec4Label": "Air Intake",
+      "spec4Sub": "high RPM",
+      "dataSource": "SOURCE · DYNO TEST · DIAGNOSTIC DATALOG",
+      "techEyebrow": "TECHNOLOGY",
+      "techTitle": "High-Density Spunlace Fiber",
+      "tech1": "Entangled fabric structure",
+      "tech2": "Precision pleated design",
+      "tech3": "High-tensile reinforcement",
+      "tech4": "Washable & reusable"
+    }
+  },
   "story": {
     "eyebrow": "Along With Shadow",
     "title1": "Gonna Be",

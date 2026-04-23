@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { StatsHeader } from "./StatsHeader";
+import { ProductSpecs } from "./ProductSpecs";
 import { CompatibilityClient } from "./CompatibilityClient";
 import type { ProductVehicle, STFilterVehicle } from "@/lib/types/vehicle";
 
@@ -81,6 +82,7 @@ export function ProductView({ slug, initialData, initialCursor }: ProductViewPro
   return (
     <>
       <StatsHeader slug={slug} stats={stats} />
+      <ProductSpecs slug={slug} />
       <CompatibilityClient
         groupedData={groupedData}
         slug={slug}
