@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/*
+ * All fonts are loaded via next/font in src/lib/fonts.ts and self-hosted.
+ * This avoids FOUT, removes runtime CDN calls, and guarantees CJK coverage.
+ * The CSS variables below reference the class-scoped variables injected on <html>.
+ */
+
 @theme {
   --color-orange: #EA5504;
   --color-orange-dim: #ea550420;
@@ -16,7 +22,12 @@
   --color-green: #4ade80;
   --color-green-bg: #0d2818;
   --color-green-border: #166534;
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --color-yellow: #facc15;
+
+  --font-sans: var(--font-inter), var(--font-noto-tc), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: var(--font-eurostar-ext), var(--font-eurostar), var(--font-noto-tc), sans-serif;
+  --font-brand: var(--font-eurostar), var(--font-noto-tc), sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, "SF Mono", Menlo, monospace;
 }
 
 body {
@@ -26,6 +37,25 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
+
+/*
+ * Only explicit CJK content (.zh class, applied in JSX when name has CJK chars)
+ * overrides to Noto Sans TC and drops uppercase.
+ *
+ * We intentionally DO NOT override .font-display / .font-brand at lang(zh) level,
+ * because a zh page can still show an English wordmark (e.g. "ST-Filter") and
+ * we want it to use Eurostar Extended with uppercase, identical to /en.
+ */
+.zh {
+  font-family: var(--font-noto-tc), var(--font-inter), -apple-system, sans-serif;
+  text-transform: none !important;
+  letter-spacing: 0.02em;
+}
+
+/* Brand / display utility classes */
+.font-display { font-family: var(--font-display); }
+.font-brand   { font-family: var(--font-brand); }
+.font-mono    { font-family: var(--font-mono); }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; }

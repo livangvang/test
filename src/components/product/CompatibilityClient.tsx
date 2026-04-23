@@ -1,34 +1,15 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import { useTranslations } from "next-intl";
+import { useState, useMemo } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { useCompatibility } from "@/hooks/useCompatibility";
 import { SearchBar } from "./SearchBar";
+import { BrandFilter } from "./BrandFilter";
 import type { ProductVehicle, STFilterVehicle } from "@/lib/types/vehicle";
 
 type AnyVehicle = ProductVehicle | STFilterVehicle;
 
-function mergeIntoGrouped(
-  existing: Record<string, AnyVehicle[]>,
-  incoming: AnyVehicle[]
-): Record<string, AnyVehicle[]> {
-  const merged: Record<string, AnyVehicle[]> = {};
-  for (const [brand, list] of Object.entries(existing)) {
-    merged[brand] = [...list];
-  }
-  for (const v of incoming) {
-    const brand = v.brand || "Unknown";
-    if (!merged[brand]) merged[brand] = [];
-    merged[brand].push(v);
-  }
-  const sorted: Record<string, AnyVehicle[]> = {};
-  for (const brand of Object.keys(merged).sort()) {
-    sorted[brand] = [...merged[brand]].sort((a, b) => a.model.localeCompare(b.model));
-  }
-  return sorted;
-}
-
-// ─── Feature definitions for card view (FD-EVO / D-Meter) ───
+/* ─── Card-layout feature definitions (FD-EVO / D-Meter) ─── */
 
 interface Feature {
   key: string;
@@ -55,7 +36,203 @@ const DMETER_FEATURES: Feature[] = [
   { key: "mileage", labelKey: "mileage" },
 ];
 
-/** Single vehicle card for FD-EVO / D-Meter */
+const CARD_PRODUCTS: Record<string, Feature[]> = {
+  fdevo: FDEVO_FEATURES,
+  dmeter2plus: DMETER_FEATURES,
+};
+
+/* ─── Table column definitions ─── */
+
+interface Column {
+  key: string;
+  labelKey: string;
+  type: "text" | "chassis" | "harness" | "stock" | "status";
+  align?: "left" | "right";
+  width?: string;
+  mono?: boolean;
+}
+
+const TABLE_COLUMNS: Record<string, Column[]> = {
+  "4s": [
+    { key: "model", labelKey: "model", type: "text", width: "1.8fr" },
+    { key: "chassis", labelKey: "chassis", type: "chassis", width: "110px" },
+    { key: "year", labelKey: "year", type: "text", width: "110px", mono: true },
+    { key: "engine", labelKey: "engine", type: "text", width: "1.5fr", mono: true },
+    { key: "harness", labelKey: "harness", type: "harness", width: "110px" },
+    { key: "__status", labelKey: "status", type: "status", width: "110px", align: "right" },
+  ],
+  iboost2: [
+    { key: "model", labelKey: "model", type: "text", width: "1.8fr" },
+    { key: "chassis", labelKey: "chassis", type: "chassis", width: "110px" },
+    { key: "year", labelKey: "year", type: "text", width: "110px", mono: true },
+    { key: "engine", labelKey: "engine", type: "text", width: "1.5fr", mono: true },
+    { key: "harness", labelKey: "connector", type: "harness", width: "110px" },
+    { key: "__status", labelKey: "status", type: "status", width: "110px", align: "right" },
+  ],
+  valve: [
+    { key: "model", labelKey: "model", type: "text", width: "1.8fr" },
+    { key: "chassis", labelKey: "chassis", type: "chassis", width: "110px" },
+    { key: "year", labelKey: "year", type: "text", width: "110px", mono: true },
+    { key: "engine", labelKey: "engine", type: "text", width: "1.5fr", mono: true },
+    { key: "harness", labelKey: "controller", type: "harness", width: "110px" },
+    { key: "__status", labelKey: "status", type: "status", width: "110px", align: "right" },
+  ],
+  stfilter: [
+    { key: "model", labelKey: "model", type: "text", width: "1.6fr" },
+    { key: "chassis", labelKey: "chassis", type: "chassis", width: "110px" },
+    { key: "year", labelKey: "year", type: "text", width: "100px", mono: true },
+    { key: "engine", labelKey: "engine", type: "text", width: "1.3fr", mono: true },
+    { key: "knNumber", labelKey: "knNumber", type: "text", width: "120px", mono: true },
+    { key: "shape", labelKey: "shape", type: "text", width: "100px" },
+    { key: "inStock", labelKey: "stock", type: "stock", width: "110px", align: "right" },
+  ],
+};
+
+/* ─── Status marker ─── */
+
+function StatusBadge({ verified, tLabels }: { verified: boolean; tLabels: (k: string) => string }) {
+  if (verified) {
+    return (
+      <span className="font-brand inline-flex items-center gap-1.5 text-[10px] font-black tracking-[1.5px] text-green">
+        <span
+          className="inline-block h-1.5 w-1.5 rounded-full bg-green"
+          style={{ boxShadow: "0 0 8px #4ADE80" }}
+        />
+        {tLabels("verified").toUpperCase()}
+      </span>
+    );
+  }
+  return (
+    <span className="font-brand inline-flex items-center gap-1.5 text-[10px] font-black tracking-[1.5px] text-yellow">
+      <span className="inline-block h-1.5 w-1.5 rounded-full bg-yellow" />
+      {tLabels("unverified").toUpperCase()}
+    </span>
+  );
+}
+
+/* ─── Single row with orange hover-sweep ─── */
+
+function VehicleRow({
+  vehicle,
+  idx,
+  columns,
+  gridTemplate,
+  t,
+}: {
+  vehicle: AnyVehicle;
+  idx: number;
+  columns: Column[];
+  gridTemplate: string;
+  t: (k: string) => string;
+}) {
+  const [hover, setHover] = useState(false);
+  const data = vehicle as unknown as Record<string, unknown>;
+
+  // compatibility check is the source-of-truth for "verified"
+  const verifiedFlag =
+    (vehicle as ProductVehicle).compatibility === "☑️" ||
+    (vehicle as STFilterVehicle).inStock === true ||
+    (data["__verifiedOverride"] as boolean | undefined) === true ||
+    // default: assume verified for row products unless flagged otherwise
+    !("compatibility" in vehicle);
+
+  return (
+    <div
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      className="grid items-center border-b border-[#141414] transition-colors"
+      style={{
+        gridTemplateColumns: `48px ${gridTemplate}`,
+        padding: "14px 24px",
+        background: hover
+          ? "linear-gradient(90deg, rgba(234,85,4,0.08), transparent 70%)"
+          : "transparent",
+        borderLeft: `2px solid ${hover ? "#EA5504" : "transparent"}`,
+      }}
+    >
+      {/* Index */}
+      <div
+        className="font-brand text-[12px] font-black tracking-[1px] transition-colors"
+        style={{ color: hover ? "#EA5504" : "#333" }}
+      >
+        {String(idx + 1).padStart(3, "0")}
+      </div>
+
+      {columns.map((col) => {
+        const val = col.key === "__status" ? undefined : data[col.key];
+        const align = col.align === "right" ? "text-right" : "text-left";
+
+        if (col.type === "status") {
+          return (
+            <div key={col.key} className={align}>
+              <StatusBadge verified={verifiedFlag} tLabels={t} />
+            </div>
+          );
+        }
+        if (col.type === "chassis") {
+          return (
+            <div key={col.key}>
+              {val ? (
+                <span
+                  className="font-brand text-[12px] font-black tracking-[0.5px] text-orange"
+                  style={{
+                    padding: "3px 9px",
+                    background: "rgba(234,85,4,0.1)",
+                    border: "1px solid rgba(234,85,4,0.35)",
+                  }}
+                >
+                  {String(val)}
+                </span>
+              ) : (
+                <span className="text-text3">—</span>
+              )}
+            </div>
+          );
+        }
+        if (col.type === "harness") {
+          return (
+            <div key={col.key} className="font-mono text-[11px] text-text3">
+              {val ? String(val) : <span className="text-text3">—</span>}
+            </div>
+          );
+        }
+        if (col.type === "stock") {
+          return (
+            <div key={col.key} className={align}>
+              {val ? (
+                <span className="font-brand text-[10px] font-black tracking-[1.5px] text-green inline-flex items-center gap-1.5">
+                  <span
+                    className="inline-block h-1.5 w-1.5 rounded-full bg-green"
+                    style={{ boxShadow: "0 0 8px #4ADE80" }}
+                  />
+                  {t("inStock").toUpperCase()}
+                </span>
+              ) : (
+                <span className="font-brand text-[10px] font-black tracking-[1.5px] text-text3">
+                  {t("orderAvailable").toUpperCase()}
+                </span>
+              )}
+            </div>
+          );
+        }
+
+        // default text / mono
+        const isModel = col.key === "model";
+        return (
+          <div
+            key={col.key}
+            className={`${align} ${col.mono ? "font-mono text-[12px] text-text2" : isModel ? "text-[15px] font-bold text-text" : "text-[13px] text-text2"}`}
+          >
+            {val ? String(val) : ""}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ─── FD-EVO / D-Meter card — preserved from upstream, re-skinned V4 ─── */
+
 function VehicleCard({
   vehicle,
   features,
@@ -68,55 +245,38 @@ function VehicleCard({
   t: (key: string) => string;
 }) {
   const data = vehicle as unknown as Record<string, string | undefined>;
-
-  // Count supported vs total features that have data (O or X)
   const tested = features.filter((f) => data[f.key] === "O" || data[f.key] === "X");
   const supported = features.filter((f) => data[f.key] === "O");
   const isVerified = vehicle.compatibility === "☑️";
 
   return (
-    <div className="rounded-xl border border-border bg-card p-4 transition-colors hover:border-border/80">
-      {/* Top: name + year + engine */}
-      <div className="mb-2">
-        <span className="text-sm font-bold text-text">
-          {vehicle.model}
-        </span>
+    <div className="border border-border bg-card p-4 transition-colors hover:border-[#2a2a2a]">
+      <div className="mb-2 flex flex-wrap items-baseline gap-2">
+        <span className="text-[14px] font-bold text-text">{vehicle.model}</span>
         {vehicle.year && (
-          <span className="ml-2 rounded bg-bg3 px-1.5 py-0.5 text-[11px] text-text2">
+          <span className="font-mono bg-bg3 px-1.5 py-0.5 text-[11px] text-text2">
             {vehicle.year}
           </span>
         )}
         {vehicle.engine && (
-          <span className="ml-1.5 rounded bg-bg3 px-1.5 py-0.5 text-[11px] text-text2">
+          <span className="font-mono bg-bg3 px-1.5 py-0.5 text-[11px] text-text2">
             {vehicle.engine}
           </span>
         )}
       </div>
 
-      {/* Summary line: verified badge + count + version */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        {isVerified ? (
-          <span className="rounded-md bg-green-bg border border-green-border px-2 py-0.5 text-[11px] font-medium text-green">
-            ✓ {t("verified")}
-          </span>
-        ) : (
-          <span className="rounded-md border border-border bg-bg3 px-2 py-0.5 text-[11px] text-text3">
-            ✗ {t("unverified")}
-          </span>
-        )}
+        <StatusBadge verified={isVerified} tLabels={t} />
         {tested.length > 0 && (
-          <span className="text-[11px] text-text3">
-            ✓ {supported.length} / {tested.length}
+          <span className="font-mono text-[11px] text-text3">
+            {supported.length}/{tested.length}
           </span>
         )}
         {vehicle.version && (
-          <span className="text-[11px] text-text3">
-            {vehicle.version}
-          </span>
+          <span className="font-mono text-[11px] text-text3">{vehicle.version}</span>
         )}
       </div>
 
-      {/* Feature badges — show all tested features */}
       <div className="flex flex-wrap gap-1">
         {features.map((f) => {
           const val = data[f.key];
@@ -127,11 +287,11 @@ function VehicleCard({
               key={f.key}
               className={
                 isOk
-                  ? "rounded-md bg-green-bg border border-green-border px-1.5 py-0.5 text-[10px] font-medium text-green"
-                  : "rounded-md border border-border bg-bg3 px-1.5 py-0.5 text-[10px] text-text3 line-through"
+                  ? "font-brand bg-green-bg border border-green-border px-1.5 py-0.5 text-[10px] font-black tracking-[1px] text-green"
+                  : "font-brand border border-border bg-bg3 px-1.5 py-0.5 text-[10px] font-black tracking-[1px] text-text3 line-through"
               }
             >
-              {isOk ? "✓" : "✗"} {tTable(f.labelKey)}
+              {isOk ? "✓" : "✗"} {tTable(f.labelKey).toUpperCase()}
             </span>
           );
         })}
@@ -140,110 +300,185 @@ function VehicleCard({
   );
 }
 
-// ─── Table column definitions (for non-card products) ───
-interface Column {
-  key: string;
-  labelKey: string;
-  type: "text" | "harness" | "stock";
+/* ─── Brand section (accordion) ─── */
+
+function BrandSection({
+  brand,
+  vehicles,
+  open,
+  onToggle,
+  slug,
+  columns,
+  gridTemplate,
+  features,
+  isCardLayout,
+  t,
+  tTable,
+}: {
+  brand: string;
+  vehicles: AnyVehicle[];
+  open: boolean;
+  onToggle: () => void;
+  slug: string;
+  columns: Column[];
+  gridTemplate: string;
+  features: Feature[] | null;
+  isCardLayout: boolean;
+  t: (k: string) => string;
+  tTable: (k: string) => string;
+}) {
+  const verifiedCount = vehicles.filter((v) => {
+    const pv = v as ProductVehicle;
+    if ("compatibility" in v) return pv.compatibility === "☑️";
+    const sf = v as STFilterVehicle;
+    if (slug === "stfilter") return sf.inStock;
+    return true;
+  }).length;
+
+  return (
+    <div className="mb-5 border border-border bg-[#0c0c0c]">
+      <button
+        onClick={onToggle}
+        className="grid w-full cursor-pointer items-center gap-6 border-0 bg-transparent px-7 py-5 text-left"
+        style={{ gridTemplateColumns: "auto 1fr auto", borderBottom: open ? "1px solid #1a1a1a" : "none" }}
+      >
+        <div className="flex items-baseline gap-4">
+          <span
+            className="font-display text-[28px] md:text-[36px] font-black uppercase leading-none tracking-[-1px]"
+            style={{ textWrap: "nowrap" }}
+          >
+            {brand}
+          </span>
+          <span className="font-brand text-[14px] font-black tracking-[0.5px] text-orange">
+            [{String(vehicles.length).padStart(2, "0")}]
+          </span>
+        </div>
+        <div
+          className="h-px"
+          style={{ background: "linear-gradient(90deg, #222, transparent)" }}
+        />
+        <div className="flex items-center gap-5">
+          <span className="font-brand text-[11px] font-black tracking-[2px] text-green">
+            ● {verifiedCount}/{vehicles.length} {t("verified").toUpperCase()}
+          </span>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#EA5504"
+            strokeWidth="2.5"
+            className="transition-transform"
+            style={{ transform: open ? "rotate(180deg)" : "rotate(0)" }}
+          >
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        </div>
+      </button>
+
+      {open &&
+        (isCardLayout && features ? (
+          <div className="grid grid-cols-1 gap-2 p-4 md:grid-cols-2 lg:grid-cols-3">
+            {vehicles.map((v, i) => (
+              <VehicleCard
+                key={i}
+                vehicle={v as ProductVehicle}
+                features={features}
+                tTable={tTable}
+                t={t}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <div style={{ minWidth: 900 }}>
+              {/* Column header row */}
+              <div
+                className="grid border-b border-border bg-[#070707]"
+                style={{
+                  gridTemplateColumns: `48px ${gridTemplate}`,
+                  padding: "10px 24px",
+                }}
+              >
+                <div className="font-brand text-[10px] font-black tracking-[2px] text-text3">#</div>
+                {columns.map((col) => (
+                  <div
+                    key={col.key}
+                    className={`font-brand text-[10px] font-black tracking-[2px] text-text3 ${col.align === "right" ? "text-right" : ""}`}
+                  >
+                    {tTable(col.labelKey).toUpperCase()}
+                  </div>
+                ))}
+              </div>
+
+              {vehicles.map((v, i) => (
+                <VehicleRow
+                  key={i}
+                  vehicle={v}
+                  idx={i}
+                  columns={columns}
+                  gridTemplate={gridTemplate}
+                  t={t}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
+    </div>
+  );
 }
 
-const COMMON_COLS: Column[] = [
-  { key: "model", labelKey: "model", type: "text" },
-  { key: "chassis", labelKey: "chassis", type: "text" },
-  { key: "year", labelKey: "year", type: "text" },
-  { key: "engine", labelKey: "engine", type: "text" },
-];
-
-const TABLE_COLUMNS: Record<string, Column[]> = {
-  "4s": [...COMMON_COLS, { key: "harness", labelKey: "harness", type: "harness" }],
-  iboost2: [...COMMON_COLS, { key: "harness", labelKey: "connector", type: "harness" }],
-  valve: [...COMMON_COLS, { key: "harness", labelKey: "controller", type: "harness" }],
-  stfilter: [
-    ...COMMON_COLS,
-    { key: "knNumber", labelKey: "knNumber", type: "text" },
-    { key: "swCode", labelKey: "swCode", type: "text" },
-    { key: "oemNumber", labelKey: "oemNumber", type: "text" },
-    { key: "shape", labelKey: "shape", type: "text" },
-    { key: "packageContents", labelKey: "packageContents", type: "text" },
-    { key: "inStock", labelKey: "stock", type: "stock" },
-  ],
-};
-
-// Products that use card layout
-const CARD_PRODUCTS: Record<string, Feature[]> = {
-  fdevo: FDEVO_FEATURES,
-  dmeter2plus: DMETER_FEATURES,
-};
-
-// ─── Main Component ───
+/* ─── Main client component ─── */
 
 interface CompatibilityClientProps {
   groupedData: Record<string, AnyVehicle[]>;
   slug: string;
-  initialCursor?: string | null;
+  loadingMore?: boolean;
 }
 
 export function CompatibilityClient({
-  groupedData: initialData,
+  groupedData,
   slug,
-  initialCursor = null,
+  loadingMore = false,
 }: CompatibilityClientProps) {
   const t = useTranslations("product");
   const tTable = useTranslations("table");
-
-  const [groupedData, setGroupedData] = useState(initialData);
-  const [loadingMore, setLoadingMore] = useState(!!initialCursor);
+  const locale = useLocale();
+  const isZh = locale.startsWith("zh");
 
   const { query, setQuery, displayData, totalVisible } = useCompatibility({
     groupedData,
     searchFields: ["brand", "model", "chassis", "year", "engine"],
   });
 
+  const [activeBrand, setActiveBrand] = useState<string | null>(null);
   const [expandedBrands, setExpandedBrands] = useState<Set<string>>(
-    () => new Set(Object.keys(initialData))
+    () => new Set(Object.keys(groupedData)),
   );
 
-  // Background progressive loading: keep fetching next pages until cursor is null
-  useEffect(() => {
-    if (!initialCursor) return;
-    let cancelled = false;
-    let cursor: string | null = initialCursor;
+  // Auto-expand newly-arriving brands from progressive loading
+  const dataBrandsKey = Object.keys(groupedData).sort().join("|");
+  useMemo(() => {
+    setExpandedBrands((prev) => {
+      const keys = Object.keys(groupedData);
+      if (keys.every((k) => prev.has(k))) return prev;
+      const next = new Set(prev);
+      for (const k of keys) next.add(k);
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataBrandsKey]);
 
-    (async () => {
-      while (cursor && !cancelled) {
-        try {
-          const res = await fetch(
-            `/api/vehicles/${slug}?cursor=${encodeURIComponent(cursor)}`
-          );
-          if (!res.ok) break;
-          const data = (await res.json()) as {
-            vehicles: AnyVehicle[];
-            nextCursor: string | null;
-          };
-          if (cancelled) break;
-          setGroupedData((prev) => mergeIntoGrouped(prev, data.vehicles));
-          setExpandedBrands((prev) => {
-            const next = new Set(prev);
-            for (const v of data.vehicles) {
-              next.add(v.brand || "Unknown");
-            }
-            return next;
-          });
-          cursor = data.nextCursor;
-        } catch {
-          break;
-        }
-      }
-      if (!cancelled) setLoadingMore(false);
-    })();
+  const allDisplayBrands = useMemo(() => Object.keys(displayData), [displayData]);
+  // brand filter applied on top of search
+  const filteredBrands = useMemo(
+    () => (activeBrand ? allDisplayBrands.filter((b) => b === activeBrand) : allDisplayBrands),
+    [allDisplayBrands, activeBrand],
+  );
+  const allExpanded = filteredBrands.length > 0 && filteredBrands.every((b) => expandedBrands.has(b));
 
-    return () => {
-      cancelled = true;
-    };
-  }, [slug, initialCursor]);
-
-  const displayBrands = useMemo(() => Object.keys(displayData), [displayData]);
-  const allExpanded = displayBrands.every((b) => expandedBrands.has(b));
+  // total shown after brand filter
+  const shownCount = filteredBrands.reduce((acc, b) => acc + (displayData[b]?.length ?? 0), 0);
 
   function toggleBrand(brand: string) {
     setExpandedBrands((prev) => {
@@ -253,152 +488,96 @@ export function CompatibilityClient({
       return next;
     });
   }
-
   function toggleAll() {
-    setExpandedBrands(allExpanded ? new Set() : new Set(displayBrands));
+    setExpandedBrands(allExpanded ? new Set() : new Set(filteredBrands));
   }
 
   const isCardLayout = slug in CARD_PRODUCTS;
   const features = CARD_PRODUCTS[slug] ?? null;
-  const columns = TABLE_COLUMNS[slug] ?? COMMON_COLS;
-
-  function renderCell(vehicle: ProductVehicle | STFilterVehicle, col: Column) {
-    const value = (vehicle as unknown as Record<string, unknown>)[col.key];
-    switch (col.type) {
-      case "harness":
-        return value ? (
-          <span className="rounded-md bg-orange-dim px-2 py-0.5 text-xs font-medium text-orange">
-            {String(value)}
-          </span>
-        ) : (
-          <span className="text-text3">—</span>
-        );
-      case "stock":
-        return value ? (
-          <span className="rounded-md bg-green-bg border border-green-border px-2 py-0.5 text-xs font-medium text-green">
-            {t("inStock")}
-          </span>
-        ) : (
-          <span className="rounded-md border border-border bg-bg3 px-2 py-0.5 text-xs text-text3">
-            {t("orderAvailable")}
-          </span>
-        );
-      default:
-        return <span className="text-text2">{value ? String(value) : ""}</span>;
-    }
-  }
+  const columns = TABLE_COLUMNS[slug] ?? TABLE_COLUMNS["4s"];
+  const gridTemplate = columns.map((c) => c.width ?? "1fr").join(" ");
 
   return (
     <div>
-      {/* Search + Controls */}
-      <div className="mx-auto max-w-[1200px] space-y-4 px-5 py-6 md:px-10">
-        <SearchBar value={query} onChange={setQuery} />
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-text3">
-            {totalVisible.toLocaleString()} {t("vehicles")}
-            {" · "}
-            {displayBrands.length} {t("brands")}
-            {loadingMore && (
-              <span className="ml-2 inline-flex items-center gap-1.5 text-xs text-orange">
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-orange" />
-                {t("loadingMore")}
-              </span>
-            )}
+      {/* Sticky toolbar — search + expand + brand chips + result counter */}
+      <div
+        className="sticky z-30 border-b border-border"
+        style={{
+          top: 64,
+          background: "rgba(10,10,10,0.92)",
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
+        }}
+      >
+        <div className="mx-auto max-w-[1440px] px-6 py-4 md:px-12">
+          {/* Row 1 — search + expand */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="min-w-[260px] flex-1">
+              <SearchBar value={query} onChange={setQuery} />
+            </div>
+            <button
+              onClick={toggleAll}
+              className="font-brand cursor-pointer border border-orange bg-transparent px-5 py-3 text-[11px] font-black tracking-[2.5px] text-orange transition-colors hover:bg-orange hover:text-white"
+            >
+              {(allExpanded ? tTable("collapseAll") : tTable("expandAll")).toUpperCase()}
+            </button>
           </div>
-          <button
-            onClick={toggleAll}
-            className="text-xs font-medium text-text3 transition-colors hover:text-orange"
-          >
-            {allExpanded ? tTable("collapseAll") : tTable("expandAll")}
-          </button>
+
+          {/* Row 2 — brand filter + result counter */}
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <BrandFilter
+              brands={allDisplayBrands}
+              activeBrand={activeBrand}
+              onSelect={setActiveBrand}
+            />
+            <span className="ml-auto inline-flex items-center gap-3">
+              {loadingMore && (
+                <span className="inline-flex items-center gap-1.5 text-[11px] text-orange">
+                  <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-orange" />
+                  <span className={isZh ? "zh" : ""}>{t("loadingMore")}</span>
+                </span>
+              )}
+              <span className="font-brand text-[11px] font-black tracking-[2px] text-orange">
+                {String(shownCount).padStart(3, "0")}{" "}
+                <span className={isZh ? "zh" : ""}>
+                  {t("vehicles").toUpperCase()}
+                </span>
+                <span className="mx-2 text-text3">·</span>
+                {filteredBrands.length}{" "}
+                <span className={isZh ? "zh" : ""}>
+                  {t("brands").toUpperCase()}
+                </span>
+              </span>
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* Brand Accordion */}
-      <div className="mx-auto max-w-[1200px] px-5 pb-16 md:px-10">
-        {displayBrands.length === 0 ? (
-          <div className="py-15 text-center text-text3">{t("noResults")}</div>
-        ) : (
-          <div className="space-y-2">
-            {displayBrands.map((brand) => {
-              const vehicles = displayData[brand] ?? [];
-              const isExpanded = expandedBrands.has(brand);
-
-              return (
-                <div
-                  key={brand}
-                  className="overflow-hidden rounded-xl border border-border"
-                >
-                  {/* Brand Header */}
-                  <button
-                    onClick={() => toggleBrand(brand)}
-                    className="flex w-full items-center justify-between bg-bg3 px-5 py-3 text-left transition-colors hover:bg-bg3/80"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-bold text-orange">{brand}</span>
-                      <span className="rounded-md bg-orange-dim px-2 py-0.5 text-[10px] font-medium text-orange">
-                        {vehicles.length}
-                      </span>
-                    </div>
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      className={`text-text3 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}
-                    >
-                      <path d="m6 9 6 6 6-6" />
-                    </svg>
-                  </button>
-
-                  {/* Content — card grid or table */}
-                  {isExpanded && (
-                    isCardLayout && features ? (
-                      <div className="grid grid-cols-1 gap-2 p-3 md:grid-cols-2 lg:grid-cols-3">
-                        {vehicles.map((vehicle, i) => (
-                          <VehicleCard
-                            key={i}
-                            vehicle={vehicle as ProductVehicle}
-                            features={features}
-                            tTable={tTable}
-                            t={t}
-                          />
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="border-b border-border bg-bg2 text-left">
-                              {columns.map((col) => (
-                                <th key={col.key} className="px-4 py-2 font-semibold text-text3">
-                                  {tTable(col.labelKey)}
-                                </th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {vehicles.map((vehicle, i) => (
-                              <tr key={i} className="border-b border-border/30 transition-colors hover:bg-bg3/30">
-                                {columns.map((col) => (
-                                  <td key={col.key} className="px-4 py-2">
-                                    {renderCell(vehicle, col)}
-                                  </td>
-                                ))}
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )
-                  )}
-                </div>
-              );
-            })}
+      {/* Brand sections */}
+      <div className="mx-auto max-w-[1440px] px-6 pt-9 pb-24 md:px-12">
+        {filteredBrands.length === 0 ? (
+          <div className="py-20 text-center text-text3">
+            <span className={isZh ? "zh" : ""}>{t("noResults")}</span>
           </div>
+        ) : (
+          filteredBrands.map((brand) => (
+            <BrandSection
+              key={brand}
+              brand={brand}
+              vehicles={displayData[brand] ?? []}
+              open={expandedBrands.has(brand)}
+              onToggle={() => toggleBrand(brand)}
+              slug={slug}
+              columns={columns}
+              gridTemplate={gridTemplate}
+              features={features}
+              isCardLayout={isCardLayout}
+              t={t}
+              tTable={tTable}
+            />
+          ))
         )}
+        <span className="sr-only">{totalVisible}</span>
       </div>
     </div>
   );

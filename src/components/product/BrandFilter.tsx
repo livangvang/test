@@ -8,38 +8,51 @@ interface BrandFilterProps {
   onSelect: (brand: string | null) => void;
 }
 
-export function BrandFilter({
-  brands,
-  activeBrand,
-  onSelect,
-}: BrandFilterProps) {
+/**
+ * V4 brand chip row — Eurostar caps, square chips, orange accent when active.
+ * Prefixed by a "BRANDS ▸" eyebrow so the row reads as a filter channel.
+ */
+export function BrandFilter({ brands, activeBrand, onSelect }: BrandFilterProps) {
   const t = useTranslations("product");
 
   return (
-    <div className="flex flex-wrap gap-2">
-      <button
-        onClick={() => onSelect(null)}
-        className={`rounded-lg px-3 py-1.5 text-xs font-medium tracking-wide transition-all ${
-          activeBrand === null
-            ? "bg-orange text-white"
-            : "border border-border bg-bg3 text-text2 hover:border-orange hover:text-orange"
-        }`}
-      >
+    <div className="flex flex-wrap items-center gap-1.5">
+      <span className="font-brand mr-2 text-[10px] font-black tracking-[2px] text-text3">
+        BRANDS ▸
+      </span>
+      <Chip active={activeBrand === null} onClick={() => onSelect(null)}>
         {t("allBrands")}
-      </button>
-      {brands.map((brand) => (
-        <button
-          key={brand}
-          onClick={() => onSelect(activeBrand === brand ? null : brand)}
-          className={`rounded-lg px-3 py-1.5 text-xs font-medium tracking-wide transition-all ${
-            activeBrand === brand
-              ? "bg-orange text-white"
-              : "border border-border bg-bg3 text-text2 hover:border-orange hover:text-orange"
-          }`}
+      </Chip>
+      {brands.map((b) => (
+        <Chip
+          key={b}
+          active={activeBrand === b}
+          onClick={() => onSelect(activeBrand === b ? null : b)}
         >
-          {brand}
-        </button>
+          {b}
+        </Chip>
       ))}
     </div>
+  );
+}
+
+function Chip({
+  active,
+  children,
+  onClick,
+}: {
+  active: boolean;
+  children: React.ReactNode;
+  onClick: () => void;
+}) {
+  const base =
+    "font-brand cursor-pointer border px-3 py-1.5 text-[11px] font-black tracking-[1.5px] transition-colors";
+  const cls = active
+    ? "bg-orange text-white border-orange"
+    : "bg-transparent text-text2 border-border hover:border-orange hover:text-orange";
+  return (
+    <button onClick={onClick} className={`${base} ${cls}`}>
+      {children}
+    </button>
   );
 }

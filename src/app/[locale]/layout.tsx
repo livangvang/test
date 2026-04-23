@@ -1,9 +1,16 @@
-import { NextIntlClientProvider, useMessages } from "next-intl";
+import { NextIntlClientProvider } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 import { routing } from "@/i18n/routing";
 import { TopBar } from "@/components/layout/TopBar";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import {
+  eurostar,
+  eurostarExtended,
+  inter,
+  jetbrainsMono,
+  notoSansTC,
+} from "@/lib/fonts";
 import "@/app/globals.css";
 
 export function generateStaticParams() {
@@ -20,14 +27,16 @@ export default async function LocaleLayout({
   const { locale } = await params;
   setRequestLocale(locale);
 
+  const fontVars = [
+    inter.variable,
+    jetbrainsMono.variable,
+    notoSansTC.variable,
+    eurostar.variable,
+    eurostarExtended.variable,
+  ].join(" ");
+
   return (
-    <html lang={locale}>
-      <head>
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
-          rel="stylesheet"
-        />
-      </head>
+    <html lang={locale} className={fontVars}>
       <body>
         <NextIntlClientProvider locale={locale}>
           <TopBar />
